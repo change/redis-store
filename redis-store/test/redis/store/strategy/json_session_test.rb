@@ -146,8 +146,7 @@ describe "Redis::Store::Strategy::JsonSession" do
       @store.del(@utf8_key)
       @store.setnx(@utf8_key, @ascii_rabbit)
       retrievied_ascii_rabbit = @store.get(@utf8_key)
-      JSON.load(JSON.generate(retrievied_ascii_rabbit.delete(:ascii_string))).must_equal(@ascii_string)
-      @ascii_rabbit.delete(:ascii_string)
+      retrievied_ascii_rabbit[:ascii_string] = JSON.load(JSON.generate(retrievied_ascii_rabbit[:ascii_string]))
       retrievied_ascii_rabbit.must_equal(@ascii_rabbit)
     end
 
