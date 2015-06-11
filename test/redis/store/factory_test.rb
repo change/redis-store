@@ -41,9 +41,31 @@ describe "Redis::Store::Factory" do
         store.instance_variable_get(:@client).password.must_equal("secret")
       end
 
-      it "allows/disable marshalling" do
-        store = Redis::Store::Factory.create :marshalling => false
-        store.instance_variable_get(:@marshalling).must_equal(false)
+      it "allows json strategy option" do
+        store = Redis::Store::Factory.create :strategy => :json
+        store.must_be_kind_of(Redis::Store::Strategy::Json)
+      end
+
+      it "allows marshal strategy option" do
+        store = Redis::Store::Factory.create :strategy => :marshal
+        store.must_be_kind_of(Redis::Store::Strategy::Marshal)
+      end
+
+      it "allows yaml strategy option" do
+        store = Redis::Store::Factory.create :strategy => :yaml
+        store.must_be_kind_of(Redis::Store::Strategy::Yaml)
+      end
+
+      it "allows false strategy option" do
+        store = Redis::Store::Factory.create :strategy => false
+        store.wont_be_kind_of(Redis::Store::Strategy::Json)
+        store.wont_be_kind_of(Redis::Store::Strategy::Marshal)
+        store.wont_be_kind_of(Redis::Store::Strategy::Yaml)
+      end
+
+      it "defaults to marshal strategy" do
+        store = Redis::Store::Factory.create
+        store.must_be_kind_of(Redis::Store::Strategy::Marshal)
       end
 
       it "should instantiate a Redis::DistributedStore store" do
@@ -92,47 +114,6 @@ describe "Redis::Store::Factory" do
           "Redis Client connected to 127.0.0.1:6379 against DB 0",
           "Redis Client connected to 127.0.0.1:6380 against DB 0",
         ])
-      end
-    end
-
-    describe 'when given host Hash and options Hash' do 
-      it 'instantiates Redis::Store and merges options' do
-        store = Redis::Store::Factory.create(
-          { :host => '127.0.0.1', :port => '6379' }, 
-          { :namespace => 'theplaylist' }
-        )
-      end
-
-      it 'instantiates Redis::DistributedStore and merges options' do 
-        store = Redis::Store::Factory.create(
-          { :host => '127.0.0.1', :port => '6379' }, 
-          { :host => '127.0.0.1', :port => '6380' }, 
-          { :namespace => 'theplaylist' }
-        )
-        store.nodes.map {|node| node.to_s }.must_equal([
-          "Redis Client connected to 127.0.0.1:6379 against DB 0 with namespace theplaylist",
-          "Redis Client connected to 127.0.0.1:6380 against DB 0 with namespace theplaylist"
-        ])
-      end
-    end
-
-    describe 'when given host String and options Hash' do 
-      it 'instantiates Redis::Store and merges options' do 
-        store = Redis::Store::Factory.create "redis://127.0.0.1", { :namespace => 'theplaylist' }
-        store.to_s.must_equal("Redis Client connected to 127.0.0.1:6379 against DB 0 with namespace theplaylist")
-      end
-
-      it 'instantiates Redis::DistributedStore and merges options' do 
-        store = Redis::Store::Factory.create "redis://127.0.0.1:6379", "redis://127.0.0.1:6380", { :namespace => 'theplaylist' }
-        store.nodes.map {|node| node.to_s }.must_equal([
-          "Redis Client connected to 127.0.0.1:6379 against DB 0 with namespace theplaylist",
-          "Redis Client connected to 127.0.0.1:6380 against DB 0 with namespace theplaylist",
-        ])
-      end
-
-      it 'instantiates Redis::Store and sets namespace from String' do
-        store = Redis::Store::Factory.create "redis://127.0.0.1:6379/0/theplaylist", { :expire_after => 5 }
-        store.to_s.must_equal("Redis Client connected to 127.0.0.1:6379 against DB 0 with namespace theplaylist")
       end
     end
   end
