@@ -43,4 +43,3 @@ class Redis
       end
   end
 end
-
